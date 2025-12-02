@@ -1,7 +1,7 @@
 # TileEdit
 Compiled on Windows 11 in the MSYS2 (https://www.msys2.org/) environment.
 
-# License
+# TileEdit License
 Software under the 3-Clause BSD License
 As described here: https://opensource.org/licenses/BSD-3-Clause
 
