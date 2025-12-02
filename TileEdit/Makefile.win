@@ -6,7 +6,7 @@ TARGET_EXEC := TileEdit
 
 BUILD_DIR := ./build
 SRC_DIRS := .
-LDFLAGS := -Wall -Wextra -lSDL2main -lSDL2_image -lSDL2 -lSDL2_ttf
+LDFLAGS := -Wall -Wextra -lmingw32 -lSDL2main -lSDL2_image -lSDL2 -lSDL2_ttf
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
