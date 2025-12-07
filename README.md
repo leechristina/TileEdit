@@ -1,7 +1,7 @@
 # TileEdit
 Compiled on Windows 11 in the MSYS2 (https://www.msys2.org/) environment.
 
-# TileEdit License
+# License
 Software under the 3-Clause BSD License
 As described here: https://opensource.org/licenses/BSD-3-Clause
 
@@ -47,7 +47,8 @@ Author: Jetrel, Daniel Cook, Zabin
 https://opengameart.org/content/2d-lost-garden-tileset-transition-to-jetrels-wood-tileset  
 CC-BY-SA 3.0  
 
-**tree_tileset.png**  
+**tree_tileset.png** 
+**16x16_walls_Denzi101114-4.png** 
 Author: DENZI  
 https://opengameart.org/content/denzis-sidescroller-tilesets
 

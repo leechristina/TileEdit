@@ -47,7 +47,8 @@ Author: Jetrel, Daniel Cook, Zabin
 https://opengameart.org/content/2d-lost-garden-tileset-transition-to-jetrels-wood-tileset  
 CC-BY-SA 3.0  
 
-**tree_tileset.png**  
+**tree_tileset.png** 
+**16x16_walls_Denzi101114-4.png** 
 Author: DENZI  
 https://opengameart.org/content/denzis-sidescroller-tilesets
 

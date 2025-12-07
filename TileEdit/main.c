@@ -144,8 +144,9 @@ void setColor(struct TextData* textTexture, uint8_t r, uint8_t g, int8_t b, uint
 //free texture
 void freeit();
 
-void setSDL_Rects(struct Metadata metadata);
 void initSDL_Rects();
+void setSDL_Rects(struct Metadata metadata);
+void setSDL_Tileset_Rects();
 void DrawMapGrid(struct Metadata metadata);
 void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata);
 void drawMapTiles(int *tilemap, struct Metadata metadata);
@@ -239,7 +240,7 @@ int main( int argc, char* args[] )
 
 			while( !quit )
 			{
-				while( SDL_PollEvent( &e ) != 0 )
+				while( SDL_PollEvent( &e ) )
 				{
 					switch(e.type)
 					{
@@ -381,7 +382,7 @@ int main( int argc, char* args[] )
 
                 
 				
-				//draw image and tile grid
+				//draw tileset image and tile grid
                 SDL_RenderCopy(mainRenderer, pngTexture, &srcTileRect, &dstTileRect);
 				DrawTileGrid(tile_rows, tile_cols, tilemap_data.metadata);
 
@@ -555,7 +556,9 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
     }
 	int items_written = 0;
 	//int tile = -2;
-    items_written = fread(tilemap_data->metadata.filename, sizeof(char), strlen(tilemap_data->metadata.filename), file);
+	uint8_t fname_size = 0;
+	items_written = fread(&fname_size, sizeof(uint8_t), 1, file);
+    items_written = fread(tilemap_data->metadata.filename, sizeof(char), fname_size, file);
 	SDL_Log("sizeof(struct Tile): %ld", sizeof(struct Tile));
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
 	items_written = fread(&(tilemap_data->metadata.tile), sizeof(struct Tile), 1, file);
@@ -575,6 +578,8 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const int c_map_cols)
 {
 	SDL_Log("writeTileMapFile");
+	fprintf(stdout,"tilemap_data->metadata.filename: %s\n", tilemap_data->metadata.filename);
+	fprintf(stdout,"strlen(tilemap_data->metadata.filename): %d\n", strlen(tilemap_data->metadata.filename));
     FILE* file = fopen("tile.map", "wb");
 
     if (file == NULL) {
@@ -583,7 +588,9 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
     }
 
     //int tile;
+	uint8_t fname_size = (uint8_t)strlen(tilemap_data->metadata.filename);
 	int items_written = 0;
+	items_written = fwrite(&fname_size, sizeof(uint8_t), 1, file);
 	items_written = fwrite(tilemap_data->metadata.filename, sizeof(char), strlen(tilemap_data->metadata.filename), file);
 	items_written = fwrite(&tilemap_data->metadata.tile, sizeof(struct Tile), 1, file);
 	items_written = fwrite(tilemap_data->tilemap, sizeof(int), c_map_rows*c_map_cols, file);
@@ -665,7 +672,8 @@ bool loadMedia(struct Tilemap* tilemap_data)
 	fprintf(stdout, "tile_cols: %d tile_rows: %d\n", tile_cols, tile_rows);
 	tile_cols = tilemap_data->metadata.img_width/tile_width;
 	tile_rows = tilemap_data->metadata.img_height/tile_height;
-	
+	fprintf(stdout, "tile_cols: %d tile_rows: %d\n", tile_cols, tile_rows);
+	setSDL_Tileset_Rects();
 
 	success = loadText();
 
@@ -875,7 +883,24 @@ void setSDL_Rects(struct Metadata metadata)
 
 	tile_width = metadata.tile.width;
 	tile_height = metadata.tile.height;
+
+	tile_cols = metadata.img_width/tile_width;
+	tile_rows = metadata.img_height/tile_height;
 	SDL_Log("Exit setSDL_Rects");
+}
+
+void setSDL_Tileset_Rects()
+{
+	srcTileRect.x = 0;
+	srcTileRect.y = 0;
+	srcTileRect.w = tile_width * tile_cols;
+	srcTileRect.h = tile_height * tile_rows;
+
+	//w and h need to be same as srcTileRect to prevent warping of image due to stretching
+	dstTileRect.x = 0;
+	dstTileRect.y = tile_height * map_rows + tile_height;
+	dstTileRect.w = tile_width * tile_cols;
+	dstTileRect.h = tile_height * tile_rows;
 }
 
 //init the global SDL_RECTs
