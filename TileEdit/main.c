@@ -55,8 +55,8 @@ m: print metadata info
 const int SCREEN_WIDTH = 1400;
 const int SCREEN_HEIGHT = 900;
 
-int map_rows = 10;
-int map_cols = 20;
+uint32_t map_rows = 10;
+uint32_t map_cols = 20;
 
 int tile_rows = 10;
 int tile_cols = 15; 
@@ -103,6 +103,8 @@ struct Metadata
 	struct Tile tile;
 	int img_width;
 	int img_height;
+	uint32_t *map_rows;
+	uint32_t *map_cols;
 };
 
 struct Tilemap
@@ -176,6 +178,8 @@ int main( int argc, char* args[] )
 
 	struct Tilemap tilemap_data = {
 		.metadata.filename = file,
+		.metadata.map_rows = &map_rows,
+		.metadata.map_cols = &map_cols,
 		.metadata.tile.width = tile_width,
 		.metadata.tile.height = tile_height
 	};
@@ -184,6 +188,8 @@ int main( int argc, char* args[] )
 	int position = -1;
     
 	int curr_tilemap = 0; 
+
+
 	tilemap_data.tilemap = calloc(map_size, sizeof(int));
 	tilemap_data.tilemap1 = calloc(map_size, sizeof(int));
 	init_arr(tilemap_data.tilemap, -1, map_size); 
@@ -204,7 +210,7 @@ int main( int argc, char* args[] )
 	char folder[] = "tilesets";
 	char filename[] = "tile.map";
 	bool readFile = false;
-	if (!readTileMapFile(&tilemap_data, map_rows,  map_cols))
+	if (!readTileMapFile(&tilemap_data, map_rows, map_cols))
 	{
 		printf("Tilemap file %s does not exist", filename);
 	}
@@ -380,8 +386,6 @@ int main( int argc, char* args[] )
 				drawMapTiles(tilemap_data.tilemap1, tilemap_data.metadata);
 
 
-                
-				
 				//draw tileset image and tile grid
                 SDL_RenderCopy(mainRenderer, pngTexture, &srcTileRect, &dstTileRect);
 				DrawTileGrid(tile_rows, tile_cols, tilemap_data.metadata);
@@ -427,7 +431,12 @@ bool init()
 	}
 	else
 	{
-		mainWindow = SDL_CreateWindow( "Tile Editor!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		mainWindow = SDL_CreateWindow( "Tile Editor!", 
+			SDL_WINDOWPOS_UNDEFINED, 
+			SDL_WINDOWPOS_UNDEFINED, 
+			SCREEN_WIDTH, 
+			SCREEN_HEIGHT, 
+			SDL_WINDOW_SHOWN );
 		if( mainWindow == NULL )
 		{
 			printf( "SDL window creation failed! Error: %s\n", SDL_GetError() );
@@ -554,6 +563,7 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
         printf("Error opening tile.map!");
         return false;
     }
+
 	int items_written = 0;
 	//int tile = -2;
 	uint8_t fname_size = 0;
@@ -561,10 +571,30 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
     items_written = fread(tilemap_data->metadata.filename, sizeof(char), fname_size, file);
 	SDL_Log("sizeof(struct Tile): %ld", sizeof(struct Tile));
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
+	//get width and height of a tile
 	items_written = fread(&(tilemap_data->metadata.tile), sizeof(struct Tile), 1, file);
 	SDL_Log("Finished fread 1");
-	items_written = fread(tilemap_data->tilemap, sizeof(int), c_map_rows*c_map_cols, file);
-	items_written = fread(tilemap_data->tilemap1, sizeof(int), c_map_rows*c_map_cols, file);
+
+	//get size of tilemap memory
+	SDL_Log("sizeof(uint32_t): %d", sizeof(uint32_t));
+	SDL_Log("map_cols before read: %u\n",*tilemap_data->metadata.map_cols); //20
+	SDL_Log("map_rows after read: %u\n",*tilemap_data->metadata.map_rows); //10
+	items_written = fread(tilemap_data->metadata.map_cols, sizeof(uint32_t), 1, file); //width of map
+	items_written = fread(tilemap_data->metadata.map_rows, sizeof(uint32_t), 1, file); //height of map
+	SDL_Log("map_cols: %u\n",*tilemap_data->metadata.map_cols); //20
+	SDL_Log("map_rows: %u\n",*tilemap_data->metadata.map_rows); //10
+	
+	//allocate tilemap memory
+	int m_cols = *tilemap_data->metadata.map_cols;
+	int m_rows = *tilemap_data->metadata.map_rows;
+	int m_size = m_cols * m_rows;
+	tilemap_data->tilemap = calloc(m_size, sizeof(int));
+	tilemap_data->tilemap1 = calloc(m_size, sizeof(int));
+
+	//read data into tilemap memory
+	items_written = fread(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
+	items_written = fread(tilemap_data->tilemap1, sizeof(int), m_rows*m_cols, file);
+	
     SDL_Log("Finished fread 2");
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
 	SDL_Log("Read Width: %d\n", tilemap_data->metadata.tile.width);
@@ -588,13 +618,17 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
     }
 
     //int tile;
+	int m_cols = *tilemap_data->metadata.map_cols;
+	int m_rows = *tilemap_data->metadata.map_rows;
 	uint8_t fname_size = (uint8_t)strlen(tilemap_data->metadata.filename);
 	int items_written = 0;
 	items_written = fwrite(&fname_size, sizeof(uint8_t), 1, file);
 	items_written = fwrite(tilemap_data->metadata.filename, sizeof(char), strlen(tilemap_data->metadata.filename), file);
-	items_written = fwrite(&tilemap_data->metadata.tile, sizeof(struct Tile), 1, file);
-	items_written = fwrite(tilemap_data->tilemap, sizeof(int), c_map_rows*c_map_cols, file);
-	items_written = fwrite(tilemap_data->tilemap1, sizeof(int), c_map_rows*c_map_cols, file);
+	items_written = fwrite(&tilemap_data->metadata.tile, sizeof(struct Tile), 1, file); //width and height of tile
+	items_written = fwrite(tilemap_data->metadata.map_cols, sizeof(int), 1, file); //width of map
+	items_written = fwrite(tilemap_data->metadata.map_rows, sizeof(int), 1, file); //height of map
+	items_written = fwrite(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
+	items_written = fwrite(tilemap_data->tilemap1, sizeof(int), m_rows*m_cols, file);
     //printf("Wrote Filename: %s", metadata.filename);
     fclose(file);
 	file = NULL;
@@ -665,7 +699,6 @@ bool loadMedia(struct Tilemap* tilemap_data)
 	float h = 0.0;
 	fprintf(stdout, "tile_width: %d tile_height: %d\n", tile_width, tile_height);
 	SDL_QueryTexture(pngTexture, NULL, NULL, &tilemap_data->metadata.img_width, &tilemap_data->metadata.img_height);
-	fprintf(stdout, "tilemap_data width: %d height: %d\n", tilemap_data->metadata.img_width, tilemap_data->metadata.img_height);
 	tilemap_data->metadata.img_width = tilemap_data->metadata.img_width - tilemap_data->metadata.img_width % tile_width;
 	tilemap_data->metadata.img_height = tilemap_data->metadata.img_height - tilemap_data->metadata.img_height % tile_height;
 	fprintf(stdout, "tilemap_data width: %d height: %d\n", tilemap_data->metadata.img_width, tilemap_data->metadata.img_height);
