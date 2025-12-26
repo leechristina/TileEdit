@@ -329,8 +329,15 @@ int main( int argc, char* args[] )
 									writeTileMapFile(&tilemap_data, map_rows, map_cols);	
 									break;
 								case SDLK_m:
-									SDL_Log("metadata: filename: %s width: %d height: %d", tilemap_data.metadata.filename, tilemap_data.metadata.tile.width, tilemap_data.metadata.tile.height);
+									SDL_Log("metadata: filename: %s tile width: %d tile height: %d", tilemap_data.metadata.filename, tilemap_data.metadata.tile.width, tilemap_data.metadata.tile.height);
+									SDL_Log("map width(cols): %u map height(rows): %u", *tilemap_data.metadata.map_cols, *tilemap_data.metadata.map_rows);
 									break;
+								//double the width by adding blank space to the right of any existing map	
+								case SDLK_x:
+
+								//double the height by adding blank space to the top of any existing map
+								case SDLK_y:
+								
 								case SDLK_0:
 								    SDL_Log("Layer 0");
 								    curr_tilemap = 0;
@@ -578,7 +585,7 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 	//get size of tilemap memory
 	SDL_Log("sizeof(uint32_t): %d", sizeof(uint32_t));
 	SDL_Log("map_cols before read: %u\n",*tilemap_data->metadata.map_cols); //20
-	SDL_Log("map_rows after read: %u\n",*tilemap_data->metadata.map_rows); //10
+	SDL_Log("map_rows before read: %u\n",*tilemap_data->metadata.map_rows); //10
 	items_written = fread(tilemap_data->metadata.map_cols, sizeof(uint32_t), 1, file); //width of map
 	items_written = fread(tilemap_data->metadata.map_rows, sizeof(uint32_t), 1, file); //height of map
 	SDL_Log("map_cols: %u\n",*tilemap_data->metadata.map_cols); //20
@@ -590,6 +597,8 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 	int m_size = m_cols * m_rows;
 	tilemap_data->tilemap = calloc(m_size, sizeof(int));
 	tilemap_data->tilemap1 = calloc(m_size, sizeof(int));
+	init_arr(tilemap_data->tilemap, -1, m_size); 
+	init_arr(tilemap_data->tilemap1, -1, m_size);
 
 	//read data into tilemap memory
 	items_written = fread(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
