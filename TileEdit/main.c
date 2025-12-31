@@ -59,7 +59,12 @@ uint32_t map_rows = 10;
 uint32_t map_cols = 20;
 
 int tile_rows = 10;
-int tile_cols = 15; 
+int tile_cols = 15;
+
+int disp_start_rows = 0;
+int disp_start_cols = 0;
+int disp_rows = 10;
+int disp_cols = 20;
 
 int tile_width = 32;
 int tile_height = 32;
@@ -105,6 +110,10 @@ struct Metadata
 	int img_height;
 	uint32_t *map_rows;
 	uint32_t *map_cols;
+	uint32_t startx;
+	uint32_t starty;
+	uint32_t endx;
+	uint32_t endy;
 };
 
 struct Tilemap
@@ -139,6 +148,7 @@ bool loadMedia(struct Tilemap* tilemap_data);
 bool loadText();
 void closeit(struct Tilemap* tilemap_data);
 
+void blockcpy(int* dest, int* src, int d_rows, int d_cols, int s_rows, int s_cols);
 bool loadTextTextureFromSurface( struct TextData* textTexture);
 void render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip );
 //TextData functions
@@ -181,7 +191,9 @@ int main( int argc, char* args[] )
 		.metadata.map_rows = &map_rows,
 		.metadata.map_cols = &map_cols,
 		.metadata.tile.width = tile_width,
-		.metadata.tile.height = tile_height
+		.metadata.tile.height = tile_height,
+		.metadata.startx = 0,
+		.metadata.endx = map_cols
 	};
 
 	int mouseX, mouseY;	
@@ -248,6 +260,8 @@ int main( int argc, char* args[] )
 			{
 				while( SDL_PollEvent( &e ) )
 				{
+					int m_cols = *tilemap_data.metadata.map_cols;
+	                int m_rows = *tilemap_data.metadata.map_rows;
 					switch(e.type)
 					{
 						case SDL_QUIT:
@@ -280,7 +294,7 @@ int main( int argc, char* args[] )
 								{
 									case 0:
 									     tilemap_data.tilemap[index] = position;
-										 								printf("tilemap[index]: %d\n", tilemap_data.tilemap[index]);
+										 printf("tilemap[index]: %d\n", tilemap_data.tilemap[index]);
 										 printf("tilemap[0]: %d\n", tilemap_data.tilemap[0]);
 										 printf("tilemap[1]: %d\n", tilemap_data.tilemap[1]);
 										 printf("tilemap[2]: %d\n", tilemap_data.tilemap[2]);
@@ -334,10 +348,80 @@ int main( int argc, char* args[] )
 									break;
 								//double the width by adding blank space to the right of any existing map	
 								case SDLK_x:
+									SDL_Log("Increase x");
+									printTileMap(tilemap_data.tilemap);
+									printTileMap(tilemap_data.tilemap1);
+								    //cpy current to temp
+									int *tilemap_tmp = calloc(m_cols * m_rows, sizeof(int)); 
+									memcpy(tilemap_tmp, tilemap_data.tilemap, sizeof(int) * m_cols * m_rows);
+									int *tilemap1_tmp = calloc(m_cols * m_rows, sizeof(int));
+									memcpy(tilemap1_tmp, tilemap_data.tilemap1, sizeof(int) * m_cols * m_rows);
 
+									//record larger column size
+									*tilemap_data.metadata.map_cols *= 2;
+									//increase size of tilemaps
+									tilemap_data.tilemap = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int)); 
+									tilemap_data.tilemap1 = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int));
+									init_arr(tilemap_data.tilemap, -1, m_cols * 2 * m_rows); 
+									init_arr(tilemap_data.tilemap1, -1, m_cols * 2 * m_rows); 
+									printTileMap(tilemap_data.tilemap);
+									printTileMap(tilemap_data.tilemap1);
+									//move saved tilemap data back
+									//void blockcpy(void* dest, void* src, int d_rows, int d_cols, int s_rows, int s_cols)
+									blockcpy(tilemap_data.tilemap, tilemap_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
+									blockcpy(tilemap_data.tilemap1, tilemap1_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
+									
+									printTileMap(tilemap_data.tilemap);
+									printTileMap(tilemap_data.tilemap1);
+									break;
 								//double the height by adding blank space to the top of any existing map
 								case SDLK_y:
-								
+									break;
+								//up, down, left right arrow keys (move 5 up,down,left, right or by the max amt tiles left if less than 5)
+								case SDLK_LEFT:
+									//TODO: Debug
+									SDL_Log("Go left");
+									SDL_Log("before startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									//if curr start >= 5
+									if (tilemap_data.metadata.startx >= 5)
+									{
+                                		tilemap_data.metadata.startx -= 5;
+										tilemap_data.metadata.endx -= 5;
+									}
+									//else if curr start >= 0
+									else if (tilemap_data.metadata.startx >= 0)
+									{
+										uint32_t temp = tilemap_data.metadata.startx;
+										tilemap_data.metadata.startx = 0;
+										tilemap_data.metadata.endx -= temp;
+									}
+									SDL_Log("after startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									//else if curr start = 0 do nothing
+									break;
+
+								case SDLK_RIGHT:
+									//TODO: Debug
+									SDL_Log("go right");
+									SDL_Log("before startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									uint32_t end_disp = tilemap_data.metadata.endx;
+									//if curr end < m_cols - 5
+									if (end_disp <= m_cols - 5)
+									{
+                                    	tilemap_data.metadata.startx += 5;
+										tilemap_data.metadata.endx += 5;
+									}
+									//else if curr end <= m_cols
+									else if (end_disp <= m_cols)
+									{
+										uint32_t temp = tilemap_data.metadata.startx;
+										tilemap_data.metadata.startx += temp; 
+										tilemap_data.metadata.endx += temp; 
+									}
+									SDL_Log("after startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									//end = size;
+									//else if curr end = size
+									break;
+									
 								case SDLK_0:
 								    SDL_Log("Layer 0");
 								    curr_tilemap = 0;
@@ -507,28 +591,6 @@ void printTileMap(int *tilemap)
 		printf("\n");
 	}
 	printf("exit printTileMap\n");
-}
-
-void drawMapTiles(int *tilemap, struct Metadata metadata)
-{
-	//printf("drawMapTiles");
-	const int tile_width = metadata.tile.width;
-	const int tile_height = metadata.tile.height;
-	for (int i=0; i < map_rows; ++i)
-	{
-		for(int j=0; j < map_cols; ++j)
-		{
-			//if location != -1
-			if (tilemap[i*map_cols + j] != -1)
-			{
-				//set active_map_tex_rect
-				get_map_position_tex(tilemap[i*map_cols + j], metadata);
-				dstTileMapPlaced.x = j * tile_width;
-				dstTileMapPlaced.y = i * tile_height;
-				SDL_RenderCopy(mainRenderer, pngTexture, &active_map_tex_rect, &dstTileMapPlaced);
-			}
-		}
-	}
 }
 
 bool inTileArea(SDL_Event e, struct Metadata metadata)
@@ -757,6 +819,24 @@ void closeit(struct Tilemap* tilemap_data)
 	SDL_Quit();
 }
 
+//precondition: dest size >= src size
+void blockcpy(int* dest, int* src, int d_rows, int d_cols, int s_rows, int s_cols)
+{
+	int src_i = 0;
+	for (int row = 0; row < d_rows; ++row)
+	{
+		for (int col=0; col < d_cols; ++col)
+		{
+			if (col < s_cols && row < s_rows)
+			{
+				//dst[src_i] = src[row * d_cols + col];
+				dest[row * d_cols + col] = src[src_i];
+				++src_i;
+			}
+		}
+	}
+}
+
 void setColor(struct TextData* textTexture, uint8_t r, uint8_t g, int8_t b, uint8_t a)
 {
 	textTexture->textColor.r = r;
@@ -785,6 +865,37 @@ void DrawMapGrid(struct Metadata metadata)
         outlineRect.x = 0;
         outlineRect.y += metadata.tile.height;
     }
+}
+
+void drawMapTiles(int *tilemap, struct Metadata metadata)
+{
+	//printf("drawMapTiles");
+	const int tile_width = metadata.tile.width;
+	const int tile_height = metadata.tile.height;
+	uint32_t disp_startx = metadata.startx; //base on metadata
+	uint32_t disp_endx = metadata.endx; // base on metadata
+	uint32_t disp_cols = disp_endx - disp_startx + 1;
+	//SDL_Log("disp_startx: %u disp_endx: %u", disp_startx, disp_endx);
+	for (int i=0; i < map_rows; ++i)
+	{
+		//move ahead disp_startx
+		for(int j=0; j < map_cols; ++j)
+		{
+			//if location != -1 
+			//TODO AND location j < disp_endx
+			//if (tilemap[i * map_cols + j + disp_startx] != -1 && i * map_cols + j + disp_startx < disp_endx)
+			//if (tilemap[i*map_cols + j] != -1 && j < disp_endx)
+			if (tilemap[i*map_cols + j] != -1)
+			{
+				//set active_map_tex_rect
+				get_map_position_tex(tilemap[i*map_cols + j + disp_startx], metadata);
+				dstTileMapPlaced.x = j * tile_width;
+				dstTileMapPlaced.y = i * tile_height;
+				SDL_RenderCopy(mainRenderer, pngTexture, &active_map_tex_rect, &dstTileMapPlaced);
+			}
+		}
+		//move ahead map_cols - disp_endx
+	}
 }
 
 void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata)
