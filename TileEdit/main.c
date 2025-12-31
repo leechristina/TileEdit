@@ -110,10 +110,10 @@ struct Metadata
 	int img_height;
 	uint32_t *map_rows;
 	uint32_t *map_cols;
-	uint32_t startx;
-	uint32_t starty;
-	uint32_t endx;
-	uint32_t endy;
+	int startx;
+	int starty;
+	int endx;
+	int endy;
 };
 
 struct Tilemap
@@ -196,11 +196,12 @@ int main( int argc, char* args[] )
 		.metadata.endx = map_cols
 	};
 
+	SDL_Log("startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+
 	int mouseX, mouseY;	
 	int position = -1;
     
 	int curr_tilemap = 0; 
-
 
 	tilemap_data.tilemap = calloc(map_size, sizeof(int));
 	tilemap_data.tilemap1 = calloc(map_size, sizeof(int));
@@ -359,6 +360,7 @@ int main( int argc, char* args[] )
 
 									//record larger column size
 									*tilemap_data.metadata.map_cols *= 2;
+									tilemap_data.metadata.endx = *tilemap_data.metadata.map_cols + tilemap_data.metadata.startx; 
 									//increase size of tilemaps
 									tilemap_data.tilemap = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int)); 
 									tilemap_data.tilemap1 = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int));
@@ -381,43 +383,47 @@ int main( int argc, char* args[] )
 								case SDLK_LEFT:
 									//TODO: Debug
 									SDL_Log("Go left");
-									SDL_Log("before startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									SDL_Log("before startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
 									//if curr start >= 5
-									if (tilemap_data.metadata.startx >= 5)
-									{
-                                		tilemap_data.metadata.startx -= 5;
-										tilemap_data.metadata.endx -= 5;
-									}
+									//if (tilemap_data.metadata.startx >= 5)
+									//{
+                                		tilemap_data.metadata.startx += 5;
+										tilemap_data.metadata.endx += 5;
+									//}
 									//else if curr start >= 0
+									/*
 									else if (tilemap_data.metadata.startx >= 0)
 									{
 										uint32_t temp = tilemap_data.metadata.startx;
 										tilemap_data.metadata.startx = 0;
 										tilemap_data.metadata.endx -= temp;
 									}
-									SDL_Log("after startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									*/
+									SDL_Log("after startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
 									//else if curr start = 0 do nothing
 									break;
 
 								case SDLK_RIGHT:
 									//TODO: Debug
 									SDL_Log("go right");
-									SDL_Log("before startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									SDL_Log("before startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
 									uint32_t end_disp = tilemap_data.metadata.endx;
 									//if curr end < m_cols - 5
-									if (end_disp <= m_cols - 5)
-									{
-                                    	tilemap_data.metadata.startx += 5;
-										tilemap_data.metadata.endx += 5;
-									}
+									//if (end_disp <= m_cols - 5)
+									//{
+                                    	tilemap_data.metadata.startx -= 5;
+										tilemap_data.metadata.endx -= 5;
+									//}
 									//else if curr end <= m_cols
+									/*
 									else if (end_disp <= m_cols)
 									{
 										uint32_t temp = tilemap_data.metadata.startx;
 										tilemap_data.metadata.startx += temp; 
 										tilemap_data.metadata.endx += temp; 
 									}
-									SDL_Log("after startx: %u endx: %u", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
+									*/
+									SDL_Log("after startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
 									//end = size;
 									//else if curr end = size
 									break;
@@ -737,15 +743,6 @@ int get_tile_clicked(SDL_Event event, struct Metadata metadata)
     return tile_index;
 }
 
-//rectangle for tiled png
-void get_map_position_tex(int position, struct Metadata metadata)
-{
-	int y = position / tile_cols;
-	int x = position % tile_cols;
-	active_map_tex_rect.x = x*metadata.tile.width;
-    active_map_tex_rect.y = y*metadata.tile.height;
-}
-
 //get src rectangle to use for mouse moved texture piece 
 void get_position_tex(int position, struct Metadata metadata)
 {
@@ -872,9 +869,9 @@ void drawMapTiles(int *tilemap, struct Metadata metadata)
 	//printf("drawMapTiles");
 	const int tile_width = metadata.tile.width;
 	const int tile_height = metadata.tile.height;
-	uint32_t disp_startx = metadata.startx; //base on metadata
-	uint32_t disp_endx = metadata.endx; // base on metadata
-	uint32_t disp_cols = disp_endx - disp_startx + 1;
+	int disp_startx = metadata.startx; //base on metadata
+	int disp_endx = metadata.endx; // base on metadata
+	int disp_cols = disp_endx - disp_startx + 1;
 	//SDL_Log("disp_startx: %u disp_endx: %u", disp_startx, disp_endx);
 	for (int i=0; i < map_rows; ++i)
 	{
@@ -883,19 +880,26 @@ void drawMapTiles(int *tilemap, struct Metadata metadata)
 		{
 			//if location != -1 
 			//TODO AND location j < disp_endx
-			//if (tilemap[i * map_cols + j + disp_startx] != -1 && i * map_cols + j + disp_startx < disp_endx)
-			//if (tilemap[i*map_cols + j] != -1 && j < disp_endx)
-			if (tilemap[i*map_cols + j] != -1)
+			if (j + disp_startx >= 0 && j + disp_startx < map_cols && tilemap[i*map_cols + j + disp_startx] != -1)
 			{
 				//set active_map_tex_rect
 				get_map_position_tex(tilemap[i*map_cols + j + disp_startx], metadata);
-				dstTileMapPlaced.x = j * tile_width;
+				dstTileMapPlaced.x = j * tile_width ;
 				dstTileMapPlaced.y = i * tile_height;
 				SDL_RenderCopy(mainRenderer, pngTexture, &active_map_tex_rect, &dstTileMapPlaced);
 			}
 		}
 		//move ahead map_cols - disp_endx
 	}
+}
+
+//rectangle for tiled png
+void get_map_position_tex(int position, struct Metadata metadata)
+{
+	int y = position / tile_cols;
+	int x = position % tile_cols;
+	active_map_tex_rect.x = x*metadata.tile.width;
+    active_map_tex_rect.y = y*metadata.tile.height;
 }
 
 void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata)
