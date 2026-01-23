@@ -119,6 +119,7 @@ struct Metadata
 struct Tilemap
 {
 	struct Metadata metadata;
+	bool *collisionmap;
 	int *tilemap; //bottom layer
 	int *tilemap1;
 };
@@ -161,6 +162,7 @@ void setSDL_Rects(struct Metadata metadata);
 void setSDL_Tileset_Rects();
 void DrawMapGrid(struct Metadata metadata);
 void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata);
+void drawMapCollision(bool *collision, struct Metadata metadata, bool showCollision);
 void drawMapTiles(int *tilemap, struct Metadata metadata);
 int get_tile_clicked(SDL_Event event, struct Metadata metadata);
 int get_map_tile_clicked(int mouseX, int mouseY, struct Metadata metadata);
@@ -180,6 +182,7 @@ void readFilesInDir(char folder[]);
 
 int main( int argc, char* args[] )
 {
+	bool showCollision = false;
 	tiles_start = tile_height * map_rows + tile_height;
 	map_size = map_rows * map_cols;
 
@@ -205,6 +208,7 @@ int main( int argc, char* args[] )
 
 	tilemap_data.tilemap = calloc(map_size, sizeof(int));
 	tilemap_data.tilemap1 = calloc(map_size, sizeof(int));
+	tilemap_data.collisionmap = calloc(map_size, sizeof(bool));
 	init_arr(tilemap_data.tilemap, -1, map_size); 
 	init_arr(tilemap_data.tilemap1, -1, map_size); 
 
@@ -317,6 +321,11 @@ int main( int argc, char* args[] )
 						case SDL_KEYDOWN:
 							switch( e.key.keysym.sym )
 							{
+								//toggle show or hide collision squares
+								case SDLK_c:
+									SDL_Log("showCollision");
+									showCollision = !showCollision;
+									break;
 								//toggle show or hide mouse pointer
 								case SDLK_p:
 									printf("p pressed");
@@ -481,6 +490,8 @@ int main( int argc, char* args[] )
 				DrawMapGrid(tilemap_data.metadata);
 				drawMapTiles(tilemap_data.tilemap, tilemap_data.metadata);
 				drawMapTiles(tilemap_data.tilemap1, tilemap_data.metadata);
+				drawMapCollision(tilemap_data.collisionmap, tilemap_data.metadata, showCollision);
+
 
 
 				//draw tileset image and tile grid
@@ -550,6 +561,8 @@ bool init()
 			else
 			{
 				SDL_SetRenderDrawColor( mainRenderer, 255, 255, 255, 255 );
+				//add transparency rendering
+				SDL_SetRenderDrawBlendMode(mainRenderer, SDL_BLENDMODE_BLEND);
 
 			}
             int imgFlags = IMG_INIT_PNG;
@@ -671,7 +684,8 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 	//read data into tilemap memory
 	items_written = fread(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
 	items_written = fread(tilemap_data->tilemap1, sizeof(int), m_rows*m_cols, file);
-	
+	items_written = fread(tilemap_data->collisionmap, sizeof(bool), m_rows*m_cols, file);
+
     SDL_Log("Finished fread 2");
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
 	SDL_Log("Read Width: %d\n", tilemap_data->metadata.tile.width);
@@ -706,6 +720,8 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
 	items_written = fwrite(tilemap_data->metadata.map_rows, sizeof(int), 1, file); //height of map
 	items_written = fwrite(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
 	items_written = fwrite(tilemap_data->tilemap1, sizeof(int), m_rows*m_cols, file);
+	items_written = fwrite(tilemap_data->collisionmap, sizeof(bool), m_rows*m_cols, file);
+	//tilemap_data.collisionmap = calloc(map_size, sizeof(bool));
     //printf("Wrote Filename: %s", metadata.filename);
     fclose(file);
 	file = NULL;
@@ -864,6 +880,41 @@ void DrawMapGrid(struct Metadata metadata)
     }
 }
 
+void drawMapCollision(bool *collision, struct Metadata metadata, bool showCollision)
+{
+	//printf("drawMapTiles");
+	const int tile_width = metadata.tile.width;
+	const int tile_height = metadata.tile.height;
+	int disp_startx = metadata.startx; //base on metadata
+	int disp_endx = metadata.endx; // base on metadata
+	int disp_cols = disp_endx - disp_startx + 1;
+	//SDL_Log("disp_startx: %u disp_endx: %u", disp_startx, disp_endx);
+	for (int i=0; i < map_rows; ++i)
+	{
+		//move ahead disp_startx
+		for(int j=0; j < map_cols; ++j)
+		{
+			//if location != -1 
+			//TODO AND location j < disp_endx
+			if (j + disp_startx >= 0 && j + disp_startx < map_cols && collision[i*map_cols + j + disp_startx])
+			{
+				dstTileMapPlaced.x = j * tile_width ;
+				dstTileMapPlaced.y = i * tile_height;
+				//(mainRenderer, pngTexture, &active_map_tex_rect, &dstTileMapPlaced);
+				
+				if (showCollision)
+				{ 
+					SDL_SetRenderDrawColor(mainRenderer,
+                   	0, 0, 255,
+                	90);
+					SDL_RenderFillRect(mainRenderer, &dstTileMapPlaced);
+				}
+			}
+		}
+		//move ahead map_cols - disp_endx
+	}
+}
+
 void drawMapTiles(int *tilemap, struct Metadata metadata)
 {
 	//printf("drawMapTiles");
@@ -916,8 +967,7 @@ void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata)
     {
         for (int col = 0; col < tile_cols; ++col)
         {
-			SDL_SetRenderDrawColor( mainRenderer, 170, 170, 170, 255 );	
-            SDL_SetRenderDrawColor( mainRenderer, 170, 170, 170, 255 );		
+			SDL_SetRenderDrawColor( mainRenderer, 170, 170, 170, 100 );		
             SDL_RenderDrawRect( mainRenderer, &outlineRect );
             outlineRect.x += metadata.tile.width;
         }

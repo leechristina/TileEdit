@@ -5,6 +5,8 @@
 TARGET_EXEC := TileEdit
 
 BUILD_DIR := ./build
+DEBUG_DIR := ./debug
+RELEASE_DIR := ./release
 SRC_DIRS := .
 LDFLAGS := -Wall -Wextra -lmingw32 -lSDL2main -lSDL2_image -lSDL2 -lSDL2_ttf
 
@@ -51,12 +53,59 @@ clean:
 run:
 	$(BUILD_DIR)/$(TARGET_EXEC)
 
+release: LDFLAGS := -03 -Wall -Wextra -lmingw32 -lSDL2main -lSDL2_image -lSDL2 -lSDL2_ttf
+
+release:
+	# The final build step.
+	$(RELEASE_DIR)/$(TARGET_EXEC): $(OBJS)
+		$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+	# Build step for C source
+	$(RELEASE_DIR)/%.c.o: %.c
+		mkdir -p $(dir $@)
+		$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@ 
+
+	# Build step for C++ source
+	$(RELEASE_DIR)/%.cpp.o: %.cpp
+		mkdir -p $(dir $@)
+		$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+
 valgrind:
 	valgrind --leak-check=yes --log-file="logfile" $(BUILD_DIR)/$(TARGET_EXEC)	
 
 #run and print to STDERR and STDOUT
 to_file:
 	$(BUILD_DIR)/$(TARGET_EXEC) run > out 2>error	
+
+# Recursive variable. This will print "later" below
+one = one ${later_variable}
+# Simply expanded variable. This will not print "later" below
+two := two ${later_variable}
+
+later_variable = later
+
+ptest: LDFLAGS := -O3 ${LDFLAGS}
+
+ptest: 
+	echo $(one)
+	echo $(two)
+	echo $(LDFLAGS)
+
+ptest2: one = cool 
+ptest2: zzz = hi there
+
+ptest2: 
+	echo one is defined: $(one)
+	echo zzz: $(zzz)
+
+ptest3: LDFLAGS := -lSDL_test
+
+ptest3:
+		echo $(LDFLAGS)
+
+other:
+	echo one is nothing: $(one)
 
 # Include the .d makefiles. The - at the front suppresses the errors of missing
 # Makefiles. Initially, all the .d files will be missing, and we don't want those
