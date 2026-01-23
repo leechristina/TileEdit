@@ -35,13 +35,13 @@ d: drop texture being held
 m: print metadata info  
 0: draw on background layer 0  
 1: draw on layer 1  
-c: show or hide collision map
-x: double width of tilemap
-y: double height of tilemap (not yet implemented)
-left arrow <-: go left 5 tiles (or by tiles left if less than 5)
-right arrow ->: go right 5 tiles (or by tiles left if less than 5) 
-up arrow ↑: go up 5 tiles or by tiles left if less than 5 (not yet implemented)
-down arrow ↓: go down 5 tiles or by tiles left if less than 5 (not yet implemented)
+c: show or hide collision map  
+x: double width of tilemap  
+y: double height of tilemap (not yet implemented)  
+left arrow <-: go left 5 tiles (or by tiles left if less than 5)  
+right arrow ->: go right 5 tiles (or by tiles left if less than 5)   
+up arrow ↑: go up 5 tiles or by tiles left if less than 5 (not yet implemented)  
+down arrow ↓: go down 5 tiles or by tiles left if less than 5 (not yet implemented)  
 
 # Artwork Credits:
 
