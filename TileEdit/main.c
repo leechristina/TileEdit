@@ -51,6 +51,8 @@ m: print metadata info
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
+#define COLLISION 2
+
 //Screen dimension constants
 const int SCREEN_WIDTH = 1400;
 const int SCREEN_HEIGHT = 900;
@@ -183,6 +185,8 @@ void readFilesInDir(char folder[]);
 int main( int argc, char* args[] )
 {
 	bool showCollision = false;
+	// editCollision = false;
+
 	tiles_start = tile_height * map_rows + tile_height;
 	map_size = map_rows * map_cols;
 
@@ -307,11 +311,23 @@ int main( int argc, char* args[] )
 									case 1:
 									     tilemap_data.tilemap1[index] = position;
 									     break;
+									case COLLISION: 
+										SDL_Log("click collision start -- index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
+										tilemap_data.collisionmap[index] = !tilemap_data.collisionmap[index];
+										SDL_Log("index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
+										break;
 								}
-								
-
 								mousedown = true;
 								mouse_pointer = false;
+							}
+							//can edit collision map
+							else if (inMapArea(e.button.x, e.button.y, tilemap_data.metadata) && curr_tilemap == COLLISION)
+							{
+								
+								int index = get_map_tile_clicked(e.button.x, e.button.y, tilemap_data.metadata);
+								SDL_Log("click collision start no tile -- index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
+								tilemap_data.collisionmap[index] = !tilemap_data.collisionmap[index];
+								SDL_Log("index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
 							}
 							break;
 						case SDL_MOUSEBUTTONUP:
@@ -346,7 +362,18 @@ int main( int argc, char* args[] )
 									SDL_ShowCursor(SDL_ENABLE);
 									holding_tex = false;
 									mouse_pointer = true;
-									break;	
+									break;
+								//edit collision map
+								case SDLK_e:
+									SDL_Log("e pressed");
+									SDL_Log(" showCollision: %d curr_tilemap = %d\n", showCollision, curr_tilemap);
+									if (showCollision)
+									{
+										//editCollision = true;
+										curr_tilemap = COLLISION;
+									}	
+									SDL_Log(" showCollision: %d curr_tilemap = %d\n", showCollision, curr_tilemap);
+									break;
 								//save file	
 								case SDLK_s:
 									SDL_Log("s pressed: save");
@@ -447,7 +474,7 @@ int main( int argc, char* args[] )
 									break;
 
 							}
-
+						
 				    }
 				}	
 
@@ -479,6 +506,11 @@ int main( int argc, char* args[] )
 						case 1:
 							tilemap_data.tilemap1[index] = position;
 							break;
+						case COLLISION:
+							SDL_Log("edit collisionmap -- index: %d collisionmap[index]: %d ", index, tilemap_data.collisionmap[index]);
+							tilemap_data.collisionmap[index] = !tilemap_data.collisionmap[index];
+							SDL_Log("end edit collisionmap -- index: %d collisionmap[index]: %d ", index, tilemap_data.collisionmap[index]);
+							break;
 					}
 					//position = -1;
 
@@ -491,8 +523,6 @@ int main( int argc, char* args[] )
 				drawMapTiles(tilemap_data.tilemap, tilemap_data.metadata);
 				drawMapTiles(tilemap_data.tilemap1, tilemap_data.metadata);
 				drawMapCollision(tilemap_data.collisionmap, tilemap_data.metadata, showCollision);
-
-
 
 				//draw tileset image and tile grid
                 SDL_RenderCopy(mainRenderer, pngTexture, &srcTileRect, &dstTileRect);
@@ -730,7 +760,7 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
 
 bool inMapArea(int mouseX, int mouseY, struct Metadata metadata)
 {
-	return holding_tex && mouseX >= 0 && 
+	return mouseX >= 0 && 
 		mouseX < metadata.tile.width*map_cols && 
 	    mouseY >= 0 && 
 		mouseY < metadata.tile.height*map_rows;
