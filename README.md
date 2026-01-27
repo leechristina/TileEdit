@@ -59,7 +59,7 @@ CC-BY-SA 3.0
 Author: DENZI  
 https://opengameart.org/content/denzis-sidescroller-tilesets
 
-CREDIT
+CREDITS
 
 Artwork by DENZI
 denzi.diary@gmail.com
@@ -72,7 +72,7 @@ Attribution/Licensing:
 	
 Also available at http://opengameart.org/content/denzis-sidescroller-tilesets
 
-LICENSE:
+LICENSE For Denzi:
 
 CC-BY-SA 3.0 "Human Readable" Version
 ------------------------
