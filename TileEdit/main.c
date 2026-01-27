@@ -52,6 +52,8 @@ m: print metadata info
 #include <SDL2/SDL_ttf.h>
 
 #define COLLISION 2
+#define FOLDER_SIZE 11
+#define FILE_SIZE 300
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 1400;
@@ -131,8 +133,9 @@ TTF_Font* loadedTTFFont = NULL;
 
 bool holding_tex = false;
 bool mousedown = false;
-
-char file[300] = "tilesets/wood_tileset.png";
+//const int FOLDER_SIZE = 11;
+char folder[FOLDER_SIZE] = "tilesets/";
+char file[FILE_SIZE] = "tilesets/wood_tileset.png";
 
 //tile being moved by mouse
 SDL_Rect active_tex_rect;
@@ -179,6 +182,7 @@ void printTileMap(int *tilemap);
 
 bool readTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int map_cols);
 void writeTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int map_cols);
+bool readConfigFile(struct Tilemap* tilemap_data);
 void readFilesInDir(char folder[]);
 
 
@@ -187,12 +191,11 @@ int main( int argc, char* args[] )
 	bool showCollision = false;
 	// editCollision = false;
 
-	tiles_start = tile_height * map_rows + tile_height;
+	
 	map_size = map_rows * map_cols;
 
 	SDL_Log("tiles_start: %d pixels map size: %d pixels", tiles_start, map_size);
-    initSDL_Rects();
-
+    
 	struct Tilemap tilemap_data = {
 		.metadata.filename = file,
 		.metadata.map_rows = &map_rows,
@@ -202,6 +205,9 @@ int main( int argc, char* args[] )
 		.metadata.startx = 0,
 		.metadata.endx = map_cols
 	};
+	readConfigFile(&tilemap_data);
+	tiles_start = tile_height * map_rows + tile_height;
+	initSDL_Rects();
 
 	SDL_Log("startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
 
@@ -233,11 +239,11 @@ int main( int argc, char* args[] )
 	bool readFile = false;
 	if (!readTileMapFile(&tilemap_data, map_rows, map_cols))
 	{
-		printf("Tilemap file %s does not exist", filename);
+		printf("Tilemap file %s does not exist\n", filename);
 	}
 	else {
 		readFile = true;
-		SDL_Log("else readTileMapFile success");
+		SDL_Log("else readTileMapFile success\n");
 		SDL_Log("width: %d", tilemap_data.metadata.tile.width);
 		//set width and height of tiles in SDL_RECTs
 		setSDL_Rects(tilemap_data.metadata);
@@ -291,7 +297,6 @@ int main( int argc, char* args[] )
 								printf("active_tex_rect.w: %d\n", active_tex_rect.w);
 								printf("active_tex_rect.h: %d\n\n", active_tex_rect.h);							
 								holding_tex = true;
-								
 							}
 							else if (holding_tex && inMapArea(e.button.x, e.button.y, tilemap_data.metadata))
 							{
@@ -668,6 +673,62 @@ void readFilesInDir(char folder[])
 	fprintf(stdout, "exit readFilesInDir\n");   
 }
 
+int readNewline(FILE* file)
+{
+	char newline = ' ';
+	int items_written = fread(&newline, sizeof(char), 1, file);	
+
+	return items_written;
+}
+
+bool readConfigFile(struct Tilemap* tilemap_data)
+{
+	FILE* fileh;
+	SDL_Log("folder: %s", folder);
+	char* configFile = "config/config.dat";
+	
+    fileh = fopen(configFile, "r");
+	if (fileh == NULL) {
+        printf("Error opening %s!", configFile);
+        return false;
+    }
+    int items_written = 0;
+	char fname_sizec[4] = "000";
+	char tilewc[4] = "000";
+	char tilehc[4] = "000";
+	uint8_t fname_size = 0;
+	items_written = fread(&fname_sizec, sizeof(char), 3, fileh);
+	fname_sizec[3]='\0';
+    readNewline(fileh);
+	fname_size = atoi(fname_sizec);
+    items_written = fread(tilemap_data->metadata.filename, sizeof(char), fname_size, fileh);
+	tilemap_data->metadata.filename[fname_size]='\0';
+
+	char * temp = calloc(FOLDER_SIZE + fname_size + 2, sizeof(char));
+	strcpy(temp, folder);
+	strcat(temp, tilemap_data->metadata.filename);
+	strcpy (tilemap_data->metadata.filename, temp);
+	strcpy(file, tilemap_data->metadata.filename);
+
+	readNewline(fileh);
+	items_written = fread(&tilewc, sizeof(char), 3, fileh);
+	tilewc[3]='\0';
+	tilemap_data->metadata.tile.width = atoi(tilewc);
+    readNewline(fileh);
+	items_written = fread(&tilehc, sizeof(char), 3, fileh);
+	tilemap_data->metadata.tile.height = atoi(tilehc);
+	tilehc[3]='\0';
+	tile_width = tilemap_data->metadata.tile.width;
+	tile_height = tilemap_data->metadata.tile.height;
+	
+	fclose(fileh);
+
+	SDL_Log("End readConfigFile() fname_sizec: %s, fname_size: %d, tilemap_data->metadata.filename: %s\n", fname_sizec, fname_size, tilemap_data->metadata.filename);
+	SDL_Log("tilewc: %s tilehc: %s", tilewc, tilehc);
+
+	return true;
+}
+
 //todo: tile width, tile height, filename in a metadata struct
 //bool readTileMapFile(int tilemap[], struct Metadata *metadata, const int c_map_rows, const int c_map_cols)
 bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const int c_map_cols)
@@ -780,10 +841,12 @@ int get_map_tile_clicked(int mouseX, int mouseY, struct Metadata metadata)
 //get index of png tile clicked
 int get_tile_clicked(SDL_Event event, struct Metadata metadata)
 {
+
 	int yval = event.button.y; 
 	int start_val = tiles_start; //needed to convert this to int before selection worked
     int col = event.button.x/metadata.tile.width;
     int row = (yval-start_val)/metadata.tile.height;
+	SDL_Log("col: %d row: %d", col, row);
     int tile_index = row*tile_cols+col;
 
     return tile_index;
@@ -812,7 +875,11 @@ bool loadMedia(struct Tilemap* tilemap_data)
 	float w = 0.0;
 	float h = 0.0;
 	fprintf(stdout, "tile_width: %d tile_height: %d\n", tile_width, tile_height);
+	fprintf(stdout, "metadata img_width: %d img_height: %d\n", tilemap_data->metadata.img_width, tilemap_data->metadata.img_height);
 	SDL_QueryTexture(pngTexture, NULL, NULL, &tilemap_data->metadata.img_width, &tilemap_data->metadata.img_height);
+	fprintf(stdout, "metadata img_width: %d img_height: %d\n", tilemap_data->metadata.img_width, tilemap_data->metadata.img_height);
+	//tile_width = tilemap_data->metadata.tile.width;
+	//tile_height = tilemap_data->metadata.tile.height;
 	tilemap_data->metadata.img_width = tilemap_data->metadata.img_width - tilemap_data->metadata.img_width % tile_width;
 	tilemap_data->metadata.img_height = tilemap_data->metadata.img_height - tilemap_data->metadata.img_height % tile_height;
 	fprintf(stdout, "tilemap_data width: %d height: %d\n", tilemap_data->metadata.img_width, tilemap_data->metadata.img_height);
