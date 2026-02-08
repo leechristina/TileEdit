@@ -104,6 +104,17 @@ int readNewline(FILE* file)
 	return items_written;
 }
 
+bool str_replace (char* str, int size, char src, char dest)
+{
+	for (int i =0; i < size; ++i)
+	{
+		if (str[i] == src)
+		{
+			str[i] = dest;
+		}
+	}
+}
+
 bool readConfigFile(struct Tilemap* tilemap_data)
 {
 	SDL_Log("Enter readConfigFile");
@@ -117,39 +128,46 @@ bool readConfigFile(struct Tilemap* tilemap_data)
         return false;
     }
     int items_written = 0;
-	char fname_sizec[4] = "000";
-	char tilewc[4] = "000";
-	char tilehc[4] = "000";
+	
+	char fname_sizec[NUM] = "00000";
+	char tilewc[NUM] = "00000";
+	char tilehc[NUM] = "00000";
 	uint8_t fname_size = 0;
-	items_written = fread(&fname_sizec, sizeof(char), 3, fileh);
-	fname_sizec[3]='\0';
-    readNewline(fileh);
-	fname_size = atoi(fname_sizec);
-    items_written = fread(tilemap_data->metadata.filename, sizeof(char), fname_size, fileh);
-	tilemap_data->metadata.filename[fname_size]='\0';
+
+	int tempsize = FILE_SIZE;
+    //fgets(fname_sizec, tempsize, fileh);
+	//str_replace(fname_sizec, tempsize, '\n', '\0');
+	//fname_size = atoi(fname_sizec);
+	//tempsize = FILE_SIZE;
+    fgets(tilemap_data->metadata.filename, tempsize, fileh);
+	str_replace(tilemap_data->metadata.filename, tempsize, '\n', '\0');
+	//tilemap_data->metadata.filename[fname_size]='\0';
+	fname_size = strlen(tilemap_data->metadata.filename);
 	SDL_Log("tilemap_data->metadata.filename: %s", tilemap_data->metadata.filename);
+    
 
 	char * temp = calloc(FOLDER_SIZE + fname_size + 2, sizeof(char));
 	strcpy(temp, folder);
 	strcat(temp, tilemap_data->metadata.filename);
 	strcpy (tilemap_data->metadata.filename, temp);
-	//strcpy(file, tilemap_data->metadata.filename);
+	
+	tempsize = NUM;
+	fgets(tilewc, tempsize, fileh);
+	str_replace(tilewc, tempsize, '\n', '\0');
 
-	readNewline(fileh);
-	items_written = fread(&tilewc, sizeof(char), 3, fileh);
-	tilewc[3]='\0';
 	tilemap_data->metadata.tile.width = atoi(tilewc);
-    readNewline(fileh);
-	items_written = fread(&tilehc, sizeof(char), 3, fileh);
+	fgets(tilehc, tempsize, fileh);
+	str_replace(tilehc, tempsize, '\n', '\0');
 	tilemap_data->metadata.tile.height = atoi(tilehc);
-	tilehc[3]='\0';
+	
 	tile_width = tilemap_data->metadata.tile.width;
 	tile_height = tilemap_data->metadata.tile.height;
 	
 	fclose(fileh);
 
-	SDL_Log("End readConfigFile() fname_sizec: %s, fname_size: %d, tilemap_data->metadata.filename: %s\n", fname_sizec, fname_size, tilemap_data->metadata.filename);
+	SDL_Log("End readConfigFile() fname_size: %d, tilemap_data->metadata.filename: %s", fname_size, tilemap_data->metadata.filename);
 	SDL_Log("tilewc: %s tilehc: %s", tilewc, tilehc);
+	SDL_Log("tilemap_data->metadata.tile.width: %d tilemap_data->metadata.tile.height: %d", tilemap_data->metadata.tile.width, tilemap_data->metadata.tile.height);
 
 	return true;
 }
@@ -242,9 +260,6 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
     fclose(file);
 	file = NULL;
 }
-
-
-
 
 void closeit(struct Tilemap* tilemap_data)
 {

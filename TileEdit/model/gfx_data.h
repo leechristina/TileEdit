@@ -2,6 +2,7 @@
 #define GFX_DATA_H
 
 #define COLLISION 2
+#define NUM 6
 #define FOLDER_SIZE 11
 #define FILE_SIZE 300
 

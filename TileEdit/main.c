@@ -74,7 +74,7 @@ int main( int argc, char* args[] )
     
 	struct Tilemap tilemap_data = {
 		//.metadata.filename = file,
-		.metadata.filename = calloc(300, sizeof(char)),
+		.metadata.filename = calloc(FILE_SIZE, sizeof(char)),
 		.metadata.map_rows = &map_rows,
 		.metadata.map_cols = &map_cols,
 		.metadata.tile.width = tile_width,
