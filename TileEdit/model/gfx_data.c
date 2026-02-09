@@ -135,17 +135,13 @@ bool readConfigFile(struct Tilemap* tilemap_data)
 	uint8_t fname_size = 0;
 
 	int tempsize = FILE_SIZE;
-    //fgets(fname_sizec, tempsize, fileh);
-	//str_replace(fname_sizec, tempsize, '\n', '\0');
-	//fname_size = atoi(fname_sizec);
-	//tempsize = FILE_SIZE;
+
     fgets(tilemap_data->metadata.filename, tempsize, fileh);
 	str_replace(tilemap_data->metadata.filename, tempsize, '\n', '\0');
 	//tilemap_data->metadata.filename[fname_size]='\0';
 	fname_size = strlen(tilemap_data->metadata.filename);
 	SDL_Log("tilemap_data->metadata.filename: %s", tilemap_data->metadata.filename);
     
-
 	char * temp = calloc(FOLDER_SIZE + fname_size + 2, sizeof(char));
 	strcpy(temp, folder);
 	strcat(temp, tilemap_data->metadata.filename);
@@ -191,6 +187,7 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 	uint8_t fname_size = 0;
 	items_written = fread(&fname_size, sizeof(uint8_t), 1, file);
     items_written = fread(tilemap_data->metadata.filename, sizeof(char), fname_size, file);
+	tilemap_data->metadata.filename[fname_size] = '\0';
 	SDL_Log("sizeof(struct Tile): %ld", sizeof(struct Tile));
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
 	//get width and height of a tile
