@@ -6,6 +6,10 @@
 //events
 int get_tile_clicked(SDL_Event event, struct Metadata metadata);
 int get_map_tile_clicked(int mouseX, int mouseY, struct Metadata metadata);
+int onClickTileSet(SDL_Event event, struct Metadata metadata);
+void onClickTileMap(SDL_Event event, struct Tilemap tilemap_data, bool* mousedown, bool* mouse_pointer, int curr_tilemap, int position);
+void onClickCollisionMap(SDL_Event event, struct Tilemap tilemap_data);
+int get_position(SDL_Event event, struct Metadata metadata);
 void get_position_tex(int position, struct Metadata metadata);
 bool inTileArea(SDL_Event event, struct Metadata metadata);
 bool inMapArea(int mouseX, int mouseY, struct Metadata metadata);

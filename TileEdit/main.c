@@ -163,53 +163,16 @@ int main( int argc, char* args[] )
 						case SDL_MOUSEBUTTONDOWN:
 						    if (inTileArea(e, tilemap_data.metadata))
 							{
-								printf("clicked mouse in tile area!\n");
-								SDL_ShowCursor(SDL_DISABLE);
-								position = get_tile_clicked(e, tilemap_data.metadata);
-								printf("position: %d\n", position);
-								//get active_tex_rect
-								get_position_tex(position, tilemap_data.metadata);
-								printf("active_tex_rect.x: %d\n", active_tex_rect.x);
-								printf("active_tex_rect.y: %d\n", active_tex_rect.y);
-								printf("active_tex_rect.w: %d\n", active_tex_rect.w);
-								printf("active_tex_rect.h: %d\n\n", active_tex_rect.h);							
-								holding_tex = true;
+								position = onClickTileSet(e, tilemap_data.metadata);
 							}
 							else if (holding_tex && inMapArea(e.button.x, e.button.y, tilemap_data.metadata))
 							{
-								printf("clicked map area with tile!\n");
-								int index = get_map_tile_clicked(e.button.x, e.button.y, tilemap_data.metadata);
-								printf("index: %d\n", index);
-								printf("position: %d\n", position);
-								switch(curr_tilemap)
-								{
-									case 0:
-									     tilemap_data.tilemap[index] = position;
-										 printf("tilemap[index]: %d\n", tilemap_data.tilemap[index]);
-										 printf("tilemap[0]: %d\n", tilemap_data.tilemap[0]);
-										 printf("tilemap[1]: %d\n", tilemap_data.tilemap[1]);
-										 printf("tilemap[2]: %d\n", tilemap_data.tilemap[2]);
-									     break;
-									case 1:
-									     tilemap_data.tilemap1[index] = position;
-									     break;
-									case COLLISION: 
-										SDL_Log("click collision start -- index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
-										tilemap_data.collisionmap[index] = !tilemap_data.collisionmap[index];
-										SDL_Log("index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
-										break;
-								}
-								mousedown = true;
-								mouse_pointer = false;
+								onClickTileMap(e, tilemap_data, &mousedown, &mouse_pointer, curr_tilemap, position);
 							}
 							//can edit collision map
 							else if (inMapArea(e.button.x, e.button.y, tilemap_data.metadata) && curr_tilemap == COLLISION)
 							{
-								
-								int index = get_map_tile_clicked(e.button.x, e.button.y, tilemap_data.metadata);
-								SDL_Log("click collision start no tile -- index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
-								tilemap_data.collisionmap[index] = !tilemap_data.collisionmap[index];
-								SDL_Log("index: %d collisionmap[index]: %d", index, tilemap_data.collisionmap[index]);
+								onClickCollisionMap(e, tilemap_data);
 							}
 							break;
 						case SDL_MOUSEBUTTONUP:
@@ -254,6 +217,10 @@ int main( int argc, char* args[] )
 										//editCollision = true;
 										curr_tilemap = COLLISION;
 									}	
+									else
+									{
+										curr_tilemap = 0;
+									}
 									SDL_Log(" showCollision: %d curr_tilemap = %d\n", showCollision, curr_tilemap);
 									break;
 								//save file	
