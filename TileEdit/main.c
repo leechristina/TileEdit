@@ -176,7 +176,7 @@ int main( int argc, char* args[] )
 							}
 							break;
 						case SDL_MOUSEBUTTONUP:
-						    //stop dragging behavior
+						    //stop painting (dragging) behavior
 							mousedown=false;
 							break;
 						case SDL_KEYDOWN:
@@ -189,17 +189,7 @@ int main( int argc, char* args[] )
 									break;
 								//toggle show or hide mouse pointer
 								case SDLK_p:
-									printf("p pressed");
-									if (!mouse_pointer)
-									{
-										SDL_ShowCursor(SDL_ENABLE);
-										mouse_pointer = true;
-									}
-									else
-									{
-										SDL_ShowCursor(SDL_DISABLE);
-										mouse_pointer = false;
-									}
+								    onPressP(&mouse_pointer);
 									break;
 								//drop tile	
 								case SDLK_d:
@@ -210,18 +200,7 @@ int main( int argc, char* args[] )
 									break;
 								//edit collision map
 								case SDLK_e:
-									SDL_Log("e pressed");
-									SDL_Log(" showCollision: %d curr_tilemap = %d\n", showCollision, curr_tilemap);
-									if (showCollision)
-									{
-										//editCollision = true;
-										curr_tilemap = COLLISION;
-									}	
-									else
-									{
-										curr_tilemap = 0;
-									}
-									SDL_Log(" showCollision: %d curr_tilemap = %d\n", showCollision, curr_tilemap);
+									curr_tilemap = onPressE(showCollision, curr_tilemap);
 									break;
 								//save file	
 								case SDLK_s:
@@ -234,32 +213,7 @@ int main( int argc, char* args[] )
 									break;
 								//double the width by adding blank space to the right of any existing map	
 								case SDLK_x:
-									SDL_Log("Increase x");
-									printTileMap(tilemap_data.tilemap);
-									printTileMap(tilemap_data.tilemap1);
-								    //cpy current to temp
-									int *tilemap_tmp = calloc(m_cols * m_rows, sizeof(int)); 
-									memcpy(tilemap_tmp, tilemap_data.tilemap, sizeof(int) * m_cols * m_rows);
-									int *tilemap1_tmp = calloc(m_cols * m_rows, sizeof(int));
-									memcpy(tilemap1_tmp, tilemap_data.tilemap1, sizeof(int) * m_cols * m_rows);
-
-									//record larger column size
-									*tilemap_data.metadata.map_cols *= 2;
-									tilemap_data.metadata.endx = *tilemap_data.metadata.map_cols + tilemap_data.metadata.startx; 
-									//increase size of tilemaps
-									tilemap_data.tilemap = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int)); 
-									tilemap_data.tilemap1 = calloc((m_cols * 2) * *tilemap_data.metadata.map_rows, sizeof(int));
-									init_arr(tilemap_data.tilemap, -1, m_cols * 2 * m_rows); 
-									init_arr(tilemap_data.tilemap1, -1, m_cols * 2 * m_rows); 
-									printTileMap(tilemap_data.tilemap);
-									printTileMap(tilemap_data.tilemap1);
-									//move saved tilemap data back
-									//void blockcpy(void* dest, void* src, int d_rows, int d_cols, int s_rows, int s_cols)
-									blockcpy(tilemap_data.tilemap, tilemap_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
-									blockcpy(tilemap_data.tilemap1, tilemap1_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
-									
-									printTileMap(tilemap_data.tilemap);
-									printTileMap(tilemap_data.tilemap1);
+									onPressX(&tilemap_data);
 									break;
 								//double the height by adding blank space to the top of any existing map
 								case SDLK_y:

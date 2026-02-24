@@ -59,6 +59,17 @@ void init_arr(int* arr, int val, int num)
 	printf("exit init_arr\n");
 }
 
+void init_arr_bool(bool *arr, bool val, int num)
+{
+	printf("enter init_arr\n");
+	for (int i = 0; i < num; ++ i)
+	{
+		//append first char from c and null terminator
+		arr[i] = val;
+	}
+	printf("exit init_arr\n");
+}
+
 void printTileMap(int *tilemap)
 {
 	printf("enter printTileMap map_rows: %d map_cols: %d\n", map_rows, map_cols);
@@ -73,6 +84,22 @@ void printTileMap(int *tilemap)
 	}
 	printf("exit printTileMap\n");
 }
+
+void printTileMapBool(bool *tilemap)
+{
+	printf("enter printTileMap map_rows: %d map_cols: %d\n", map_rows, map_cols);
+	for (int i=0; i < map_rows; ++i)
+	{
+		for(int j=0; j < map_cols; ++j)
+		{
+			//set active_tex_rect
+			printf("%d ",tilemap[i*map_rows + j]);
+		}
+		printf("\n");
+	}
+	printf("exit printTileMap\n");
+}
+
 
 
 
@@ -294,6 +321,23 @@ void closeit(struct Tilemap* tilemap_data)
 
 //precondition: dest size >= src size
 void blockcpy(int* dest, int* src, int d_rows, int d_cols, int s_rows, int s_cols)
+{
+	int src_i = 0;
+	for (int row = 0; row < d_rows; ++row)
+	{
+		for (int col=0; col < d_cols; ++col)
+		{
+			if (col < s_cols && row < s_rows)
+			{
+				//dst[src_i] = src[row * d_cols + col];
+				dest[row * d_cols + col] = src[src_i];
+				++src_i;
+			}
+		}
+	}
+}
+
+void blockcpybool(bool* dest, bool* src, int d_rows, int d_cols, int s_rows, int s_cols)
 {
 	int src_i = 0;
 	for (int row = 0; row < d_rows; ++row)

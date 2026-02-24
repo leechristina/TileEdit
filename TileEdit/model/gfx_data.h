@@ -113,13 +113,16 @@ void freeit();
 //data
 //initialize array with values
 void init_arr(int *arr, int val, int num);
+void init_arr_bool(bool *arr, bool val, int num);
 void printTileMap(int *tilemap);
+void printTileMapBool(bool *tilemap);
 
 void initSDL_Rects();
 void setSDL_Rects(struct Metadata metadata);
 void setSDL_Tileset_Rects();
 
 void blockcpy(int* dest, int* src, int d_rows, int d_cols, int s_rows, int s_cols);
+void blockcpybool(bool* dest, bool* src, int d_rows, int d_cols, int s_rows, int s_cols);
 
 bool readTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int map_cols);
 void writeTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int map_cols);
