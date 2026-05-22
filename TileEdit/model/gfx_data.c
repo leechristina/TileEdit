@@ -3,8 +3,8 @@
 const int SCREEN_WIDTH = 1400;
 const int SCREEN_HEIGHT =  900;
 
-uint32_t map_rows = 10;
-uint32_t map_cols = 20;
+//uint32_t map_rows = 10;
+//uint32_t map_cols = 20;
 
 int tile_rows = 10;
 int tile_cols = 15;
@@ -38,7 +38,7 @@ SDL_Rect active_tex_rect;
 //current tile being rendered on map
 SDL_Rect active_map_tex_rect;
 //draw tile gfx
-//w and h need to be less than width and height of image to prevent warping due to stretching
+//w and h need to be less than or equal width and height of image to prevent warping due to stretching
 SDL_Rect srcTileRect;
 //w and h need to be same as srcTileRect to prevent warping of image due to stretching
 SDL_Rect dstTileRect;
@@ -70,8 +70,10 @@ void init_arr_bool(bool *arr, bool val, int num)
 	printf("exit init_arr\n");
 }
 
-void printTileMap(int *tilemap)
+void printTileMap(struct Tilemap* tilemap_data, int *tilemap)
 {
+	uint32_t map_rows = *tilemap_data->metadata.map_rows;
+	uint32_t map_cols = *tilemap_data->metadata.map_cols;
 	printf("enter printTileMap map_rows: %d map_cols: %d\n", map_rows, map_cols);
 	for (int i=0; i < map_rows; ++i)
 	{
@@ -85,8 +87,10 @@ void printTileMap(int *tilemap)
 	printf("exit printTileMap\n");
 }
 
-void printTileMapBool(bool *tilemap)
+void printTileMapBool(struct Tilemap* tilemap_data, bool *tilemap)
 {
+	uint32_t map_rows = *tilemap_data->metadata.map_rows;
+	uint32_t map_cols = *tilemap_data->metadata.map_cols;
 	printf("enter printTileMap map_rows: %d map_cols: %d\n", map_rows, map_cols);
 	for (int i=0; i < map_rows; ++i)
 	{
@@ -248,6 +252,8 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const i
 	SDL_Log("Read Filename: %s\n", tilemap_data->metadata.filename);
 	SDL_Log("Read Width: %d\n", tilemap_data->metadata.tile.width);
 	SDL_Log("Read Height: %d\n", tilemap_data->metadata.tile.height);
+	SDL_Log("Read Map Rows: %d\n", (int)*tilemap_data->metadata.map_rows);
+	SDL_Log("Read Map Cols: %d\n", (int)*tilemap_data->metadata.map_cols);
     fclose(file);
 	file = NULL;
 	SDL_Log("exit readTileMapFile");	
@@ -267,18 +273,23 @@ void writeTileMapFile(struct Tilemap* tilemap_data, const int c_map_rows, const 
     }
 
     //int tile;
-	int m_cols = *tilemap_data->metadata.map_cols;
-	int m_rows = *tilemap_data->metadata.map_rows;
+	uint32_t m_cols = *tilemap_data->metadata.map_cols;
+	uint32_t m_rows = *tilemap_data->metadata.map_rows;
 	uint8_t fname_size = (uint8_t)strlen(tilemap_data->metadata.filename);
 	int items_written = 0;
 	items_written = fwrite(&fname_size, sizeof(uint8_t), 1, file);
 	items_written = fwrite(tilemap_data->metadata.filename, sizeof(char), strlen(tilemap_data->metadata.filename), file);
 	items_written = fwrite(&tilemap_data->metadata.tile, sizeof(struct Tile), 1, file); //width and height of tile
-	items_written = fwrite(tilemap_data->metadata.map_cols, sizeof(int), 1, file); //width of map
-	items_written = fwrite(tilemap_data->metadata.map_rows, sizeof(int), 1, file); //height of map
+	items_written = fwrite(&m_cols, sizeof(uint32_t), 1, file); //width of map
+	items_written = fwrite(&m_rows, sizeof(uint32_t), 1, file); //height of map
 	items_written = fwrite(tilemap_data->tilemap, sizeof(int), m_rows*m_cols, file);
 	items_written = fwrite(tilemap_data->tilemap1, sizeof(int), m_rows*m_cols, file);
 	items_written = fwrite(tilemap_data->collisionmap, sizeof(bool), m_rows*m_cols, file);
+	SDL_Log("Write Filename: %s\n", tilemap_data->metadata.filename);
+	SDL_Log("Write Width: %d\n", tilemap_data->metadata.tile.width);
+	SDL_Log("Write Height: %d\n", tilemap_data->metadata.tile.height);
+	SDL_Log("Write Map Rows: %d\n", (int)*tilemap_data->metadata.map_rows);
+	SDL_Log("Write Map Cols: %d\n", (int)*tilemap_data->metadata.map_cols);
 	//tilemap_data.collisionmap = calloc(map_size, sizeof(bool));
     //printf("Wrote Filename: %s", metadata.filename);
     fclose(file);
@@ -392,7 +403,7 @@ void setSDL_Rects(struct Metadata metadata)
 	srcTileRect.h = metadata.img_height;
 
 	//w and h need to be same as srcTileRect to prevent warping of image due to stretching
-	dstTileRect.y = metadata.tile.height*map_rows + metadata.tile.height;
+	dstTileRect.y = calculateY(SCREEN_HEIGHT, metadata.img_height);
 	dstTileRect.w = metadata.img_width;
 	dstTileRect.h = metadata.img_height;
 
@@ -419,7 +430,7 @@ void setSDL_Tileset_Rects()
 
 	//w and h need to be same as srcTileRect to prevent warping of image due to stretching
 	dstTileRect.x = 0;
-	dstTileRect.y = tile_height * map_rows + tile_height;
+	dstTileRect.y = calculateY(SCREEN_HEIGHT, tile_height * tile_rows);
 	dstTileRect.w = tile_width * tile_cols;
 	dstTileRect.h = tile_height * tile_rows;
 }
@@ -454,7 +465,7 @@ void initSDL_Rects()
 
 	//w and h need to be same as srcTileRect to prevent warping of image due to stretching
 	dstTileRect.x = 0;
-	dstTileRect.y = tile_height * map_rows + tile_height;
+	dstTileRect.y = calculateY(SCREEN_HEIGHT, tile_height * tile_rows);
 	dstTileRect.w = tile_width * tile_cols;
 	dstTileRect.h = tile_height * tile_rows;
 
@@ -469,4 +480,13 @@ void initSDL_Rects()
 	dstTileMapPlaced.h = tile_height;
 
 	SDL_Log("Exit initSDL_Rects\n");
+}
+
+//calculate top of y when placing bottom of tileset on bottom on window
+int calculateY(int screen_height, int tileset_height)
+{
+	//calculate to of tileset based on bottom of window
+	return screen_height-tileset_height;
+	//to calculate top of tileset as one tilewidth below tilemap
+	//return metadata.tile.height*map_rows + metadata.tile.height;
 }

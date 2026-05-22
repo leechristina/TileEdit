@@ -162,8 +162,12 @@ void render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_
 	SDL_RenderCopyEx( mainRenderer, textTexture.texture, clip, &renderQuad, angle, center, flip );
 }
 
+//Draw tilemap grid
 void DrawMapGrid(struct Metadata metadata)
 {
+	uint32_t map_rows = *metadata.map_rows;
+	uint32_t map_cols = *metadata.map_cols;
+
     //Render gray outlined rect
     SDL_Rect outlineRect = { 
         0,   //x 
@@ -184,13 +188,13 @@ void DrawMapGrid(struct Metadata metadata)
     }
 }
 
+//Draw tileset grid
 void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata)
 {
-
     //Render gray outlined rect
     SDL_Rect outlineRect = { 
         0,   //x 
-        metadata.tile.height*map_rows + metadata.tile.height,   //y
+        calculateY(SCREEN_WIDTH, metadata.tile.height * tile_rows),  //y
         metadata.tile.width,  //width 
         metadata.tile.height   //height
     };
@@ -209,6 +213,8 @@ void DrawTileGrid(int tile_rows, int tile_cols, struct Metadata metadata)
 
 void drawMapCollision(bool *collision, struct Metadata metadata, bool showCollision)
 {
+	uint32_t map_rows = *metadata.map_rows;
+	uint32_t map_cols = *metadata.map_cols;
 	//printf("drawMapTiles");
 	const int tile_width = metadata.tile.width;
 	const int tile_height = metadata.tile.height;
@@ -244,6 +250,8 @@ void drawMapCollision(bool *collision, struct Metadata metadata, bool showCollis
 
 void drawMapTiles(int *tilemap, struct Metadata metadata)
 {
+	uint32_t map_rows = *metadata.map_rows;
+	uint32_t map_cols = *metadata.map_cols;
 	//printf("drawMapTiles");
 	const int tile_width = metadata.tile.width;
 	const int tile_height = metadata.tile.height;

@@ -4,9 +4,9 @@ int get_tile_clicked(SDL_Event event, struct Metadata metadata)
 {
 
 	int yval = event.button.y; 
-	int start_val = tiles_start; //needed to convert this to int before selection worked
+	//int start_val = tiles_start; //needed to convert this to int before selection worked
     int col = event.button.x/metadata.tile.width;
-    int row = (yval-start_val)/metadata.tile.height;
+    int row = (yval-tiles_start)/metadata.tile.height;
 	SDL_Log("col: %d row: %d", col, row);
     int tile_index = row*tile_cols+col;
 
@@ -18,7 +18,10 @@ int get_map_tile_clicked(int mouseX, int mouseY, struct Metadata metadata)
 {
     int col = mouseX/metadata.tile.width;
     int row = mouseY/metadata.tile.height;
-    int tile_index = row*map_cols+col;
+	int m_cols = (int)*metadata.map_cols;
+	//metadata.map_cols
+    //int tile_index = row*map_cols+col;
+	int tile_index = row * m_cols + col;
 
     return tile_index;
 }
@@ -102,47 +105,100 @@ int onPressE(bool showCollision, int curr_tilemap)
 	return curr_tilemap;
 }
 
-//double the width by adding blank space to the right of any existing map	
+//add 2 to the width or height
+int increase(int x, int inc)
+{
+	return x + inc;
+	//return m_cols * inc_cols;
+}
+
+//increase the width by adding blank space to the right of any existing map	
 void onPressX(struct Tilemap* tilemap_data)
 {
 	int m_cols = *tilemap_data->metadata.map_cols;
 	int m_rows = *tilemap_data->metadata.map_rows;
-
+	int inc_cols = 2;
+	int col_increase = increase(m_cols, inc_cols);
+	
 	SDL_Log("Increase x");
 	//printTileMap(tilemap_data->tilemap);
 	//printTileMap(tilemap_data->tilemap1);
-	printTileMapBool(tilemap_data->collisionmap);
-	//cpy current to temp
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
+	//copy current values  to temp
 	int *tilemap_tmp = calloc(m_cols * m_rows, sizeof(int)); 
 	memcpy(tilemap_tmp, tilemap_data->tilemap, sizeof(int) * m_cols * m_rows);
 	int *tilemap1_tmp = calloc(m_cols * m_rows, sizeof(int));
 	memcpy(tilemap1_tmp, tilemap_data->tilemap1, sizeof(int) * m_cols * m_rows);
 	bool *tilemap_collision_tmp = calloc(m_cols * m_rows, sizeof(bool));
 	memcpy(tilemap_collision_tmp, tilemap_data->collisionmap, sizeof(bool) * m_cols * m_rows);
-    printTileMapBool(tilemap_collision_tmp);
+    printTileMapBool(tilemap_data, tilemap_collision_tmp);
 
 	//record larger column size
-	*tilemap_data->metadata.map_cols *= 2;
+	*tilemap_data->metadata.map_cols = col_increase;
 	tilemap_data->metadata.endx = *tilemap_data->metadata.map_cols + tilemap_data->metadata.startx; 
 	//increase size of tilemaps
-	tilemap_data->tilemap = calloc((m_cols * 2) * *tilemap_data->metadata.map_rows, sizeof(int)); 
-	tilemap_data->tilemap1 = calloc((m_cols * 2) * *tilemap_data->metadata.map_rows, sizeof(int));
-	tilemap_data->collisionmap = calloc((m_cols * 2) * *tilemap_data->metadata.map_rows, sizeof(bool));
-	init_arr(tilemap_data->tilemap, -1, m_cols * 2 * m_rows); 
-	init_arr(tilemap_data->tilemap1, -1, m_cols * 2 * m_rows); 
-	init_arr_bool(tilemap_data->collisionmap, false, m_cols * 2 * m_rows); 
+	tilemap_data->tilemap = calloc(col_increase * m_rows, sizeof(int)); 
+	tilemap_data->tilemap1 = calloc(col_increase * m_rows, sizeof(int));
+	tilemap_data->collisionmap = calloc(col_increase * m_rows, sizeof(bool));
+	init_arr(tilemap_data->tilemap, -1, col_increase * m_rows); 
+	init_arr(tilemap_data->tilemap1, -1, col_increase * m_rows); 
+	init_arr_bool(tilemap_data->collisionmap, false, col_increase * m_rows); 
 	//printTileMap(tilemap_data->tilemap);
 	//printTileMap(tilemap_data->tilemap1);
-	printTileMapBool(tilemap_data->collisionmap);
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
 	//move saved tilemap data back
 	//void blockcpy(void* dest, void* src, int d_rows, int d_cols, int s_rows, int s_cols)
-	blockcpy(tilemap_data->tilemap, tilemap_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
-	blockcpy(tilemap_data->tilemap1, tilemap1_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
-	blockcpybool(tilemap_data->collisionmap, tilemap_collision_tmp, (int)m_rows, (int)m_cols * 2, (int)m_rows, (int)m_cols);
+	blockcpy(tilemap_data->tilemap, tilemap_tmp, m_rows, col_increase, m_rows, m_cols);
+	blockcpy(tilemap_data->tilemap1, tilemap1_tmp, m_rows, col_increase, m_rows, m_cols);
+	blockcpybool(tilemap_data->collisionmap, tilemap_collision_tmp, m_rows, col_increase, m_rows, m_cols);
 	
 	//printTileMap(tilemap_data->tilemap);
 	//printTileMap(tilemap_data->tilemap1);
-	printTileMapBool(tilemap_data->collisionmap);
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
+}
+
+//increase the height by adding blank space to the bottom of any existing map	
+void onPressY(struct Tilemap* tilemap_data)
+{
+	int m_cols = *tilemap_data->metadata.map_cols;
+	int m_rows = *tilemap_data->metadata.map_rows;
+	int inc_rows = 2;
+	int row_increase = increase(m_rows, inc_rows);
+	
+	SDL_Log("Increase x");
+	//printTileMap(tilemap_data->tilemap);
+	//printTileMap(tilemap_data->tilemap1);
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
+	//copy current values  to temp
+	int *tilemap_tmp = calloc(m_cols * m_rows, sizeof(int)); 
+	memcpy(tilemap_tmp, tilemap_data->tilemap, sizeof(int) * m_cols * m_rows);
+	int *tilemap1_tmp = calloc(m_cols * m_rows, sizeof(int));
+	memcpy(tilemap1_tmp, tilemap_data->tilemap1, sizeof(int) * m_cols * m_rows);
+	bool *tilemap_collision_tmp = calloc(m_cols * m_rows, sizeof(bool));
+	memcpy(tilemap_collision_tmp, tilemap_data->collisionmap, sizeof(bool) * m_cols * m_rows);
+    printTileMapBool(tilemap_data, tilemap_collision_tmp);
+
+	//record larger column size
+	*tilemap_data->metadata.map_rows = row_increase;
+	tilemap_data->metadata.endx = *tilemap_data->metadata.map_cols + tilemap_data->metadata.startx; 
+	//increase size of tilemaps
+	tilemap_data->tilemap = calloc(m_cols * row_increase, sizeof(int)); 
+	tilemap_data->tilemap1 = calloc(m_cols * row_increase, sizeof(int));
+	tilemap_data->collisionmap = calloc(m_cols * row_increase * m_rows, sizeof(bool));
+	init_arr(tilemap_data->tilemap, -1, m_cols * row_increase); 
+	init_arr(tilemap_data->tilemap1, -1, m_cols * row_increase); 
+	init_arr_bool(tilemap_data->collisionmap, false, m_cols * row_increase); 
+	//printTileMap(tilemap_data->tilemap);
+	//printTileMap(tilemap_data->tilemap1);
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
+	//move saved tilemap data back
+	blockcpy(tilemap_data->tilemap, tilemap_tmp, row_increase, m_cols, m_rows, m_cols);
+	blockcpy(tilemap_data->tilemap1, tilemap1_tmp, row_increase, m_cols, m_rows, m_cols);
+	blockcpybool(tilemap_data->collisionmap, tilemap_collision_tmp, row_increase, m_cols, m_rows, m_cols);
+	
+	//printTileMap(tilemap_data->tilemap);
+	//printTileMap(tilemap_data->tilemap1);
+	printTileMapBool(tilemap_data, tilemap_data->collisionmap);
 }
 
 int get_position(SDL_Event event, struct Metadata metadata)
@@ -176,9 +232,12 @@ bool inTileArea(SDL_Event e, struct Metadata metadata)
 
 bool inMapArea(int mouseX, int mouseY, struct Metadata metadata)
 {
+	int m_cols = (int)*metadata.map_cols;
+	int m_rows = (int)*metadata.map_rows;
+
 	return mouseX >= 0 && 
-		mouseX < metadata.tile.width*map_cols && 
+		mouseX < metadata.tile.width*m_cols && 
 	    mouseY >= 0 && 
-		mouseY < metadata.tile.height*map_rows;
+		mouseY < metadata.tile.height*m_rows;
 }
 

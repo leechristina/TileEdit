@@ -67,23 +67,29 @@ int main( int argc, char* args[] )
 	bool showCollision = false;
 	// editCollision = false;
 
-	
-	map_size = map_rows * map_cols;
-
-	SDL_Log("tiles_start: %d pixels map size: %d pixels", tiles_start, map_size);
-    
+	uint32_t m_rows = 10;
+	uint32_t m_cols = 20;
+ 
 	struct Tilemap tilemap_data = {
 		//.metadata.filename = file,
 		.metadata.filename = calloc(FILE_SIZE, sizeof(char)),
-		.metadata.map_rows = &map_rows,
-		.metadata.map_cols = &map_cols,
+		.metadata.map_rows = &m_rows,
+		.metadata.map_cols = &m_cols,
 		.metadata.tile.width = tile_width,
 		.metadata.tile.height = tile_height,
 		.metadata.startx = 0,
-		.metadata.endx = map_cols
+		.metadata.endx = m_cols
 	};
+
+	m_rows = *tilemap_data.metadata.map_rows;
+	m_cols = *tilemap_data.metadata.map_cols;
+	map_size =  m_rows * m_cols;
+
+	SDL_Log("tiles_start: %d pixels map size: %d pixels", tiles_start, map_size);
+
 	readConfigFile(&tilemap_data);
-	tiles_start = tile_height * map_rows + tile_height;
+	tiles_start = calculateY(SCREEN_HEIGHT, tile_height * tile_rows); 
+	//tiles_start = tile_height * map_rows + tile_height;
 	initSDL_Rects();
 
 	SDL_Log("startx: %d endx: %d", tilemap_data.metadata.startx, tilemap_data.metadata.endx);
@@ -100,8 +106,8 @@ int main( int argc, char* args[] )
 	init_arr(tilemap_data.tilemap1, -1, map_size); 
 
 	bool mouse_pointer = true;
-	printTileMap(tilemap_data.tilemap);
-	printTileMap(tilemap_data.tilemap1);
+	printTileMap(&tilemap_data, tilemap_data.tilemap);
+	printTileMap(&tilemap_data, tilemap_data.tilemap1);
 
 	SDL_Rect held_piece_rect = {
 		.x = 0,
@@ -114,7 +120,9 @@ int main( int argc, char* args[] )
 	char folder[] = "tilesets";
 	char filename[] = "tile.map";
 	bool readFile = false;
-	if (!readTileMapFile(&tilemap_data, map_rows, map_cols))
+	m_rows = *tilemap_data.metadata.map_rows;
+	m_cols = *tilemap_data.metadata.map_cols;
+	if (!readTileMapFile(&tilemap_data, m_rows, m_cols))
 	{
 		printf("Tilemap file %s does not exist\n", filename);
 	}
@@ -124,7 +132,8 @@ int main( int argc, char* args[] )
 		SDL_Log("width: %d", tilemap_data.metadata.tile.width);
 		//set width and height of tiles in SDL_RECTs
 		setSDL_Rects(tilemap_data.metadata);
-		tiles_start = tilemap_data.metadata.tile.height * map_rows + tilemap_data.metadata.tile.height;
+		//tiles_start = calculateY(SCREEN_HEIGHT, pngTexture.h); 
+		// tilemap_data.metadata.tile.height * map_rows + tilemap_data.metadata.tile.height;
 	}
 	readFilesInDir(folder);
 
@@ -140,6 +149,7 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
+			tiles_start = calculateY(SCREEN_HEIGHT, tilemap_data.metadata.img_height); 
 			//if read in a file, need to get tilemap_data
 			if (readFile)
 			{
@@ -205,7 +215,7 @@ int main( int argc, char* args[] )
 								//save file	
 								case SDLK_s:
 									SDL_Log("s pressed: save");
-									writeTileMapFile(&tilemap_data, map_rows, map_cols);	
+									writeTileMapFile(&tilemap_data, m_rows, m_cols);	
 									break;
 								case SDLK_m:
 									SDL_Log("metadata: filename: %s tile width: %d tile height: %d", tilemap_data.metadata.filename, tilemap_data.metadata.tile.width, tilemap_data.metadata.tile.height);
@@ -217,6 +227,7 @@ int main( int argc, char* args[] )
 									break;
 								//double the height by adding blank space to the top of any existing map
 								case SDLK_y:
+									onPressY(&tilemap_data);
 									break;
 								//up, down, left right arrow keys (move 5 up,down,left, right or by the max amt tiles left if less than 5)
 								case SDLK_LEFT:
@@ -296,6 +307,8 @@ int main( int argc, char* args[] )
 				}
 
 				//printTileMap(tilemap);
+
+				//draw tilemap grid and three layers
 				DrawMapGrid(tilemap_data.metadata);
 				drawMapTiles(tilemap_data.tilemap, tilemap_data.metadata);
 				drawMapTiles(tilemap_data.tilemap1, tilemap_data.metadata);

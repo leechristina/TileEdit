@@ -47,8 +47,8 @@ struct Tilemap
 extern const int SCREEN_WIDTH; // 1400;
 extern const int SCREEN_HEIGHT; //  900;
 
-extern uint32_t map_rows;
-extern uint32_t map_cols;
+//extern uint32_t map_rows;
+//extern uint32_t map_cols;
 
 extern int tile_rows;
 extern int tile_cols;
@@ -114,8 +114,8 @@ void freeit();
 //initialize array with values
 void init_arr(int *arr, int val, int num);
 void init_arr_bool(bool *arr, bool val, int num);
-void printTileMap(int *tilemap);
-void printTileMapBool(bool *tilemap);
+void printTileMap(struct Tilemap* tilemap_data, int *tilemap);
+void printTileMapBool(struct Tilemap* tilemap_data, bool *tilemap);
 
 void initSDL_Rects();
 void setSDL_Rects(struct Metadata metadata);
@@ -128,5 +128,6 @@ bool readTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int
 void writeTileMapFile(struct Tilemap* tilemap_data, const int map_rows, const int map_cols);
 bool readConfigFile(struct Tilemap* tilemap_data);
 void readFilesInDir(char folder[]);
+int calculateY(int screen_height, int tileset_height);
 
 #endif

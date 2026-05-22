@@ -15,6 +15,7 @@ void onPressP(bool* mouse_pointer);
 int onPressE(bool showCollision, int curr_tilemap);
 //double the width by adding blank space to the right of any existing map	
 void onPressX(struct Tilemap* tilemap_data);
+void onPressY(struct Tilemap* tilemap_data);
 int get_position(SDL_Event event, struct Metadata metadata);
 void get_position_tex(int position, struct Metadata metadata);
 bool inTileArea(SDL_Event event, struct Metadata metadata);
